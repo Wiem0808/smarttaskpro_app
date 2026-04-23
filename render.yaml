@@ -9,7 +9,7 @@ services:
   - type: web
     name: smarttask-api
     runtime: python
-    plan: free
+    plan: starter
     rootDir: backend
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
@@ -33,7 +33,7 @@ services:
   - type: web
     name: smarttask-app
     runtime: static
-    plan: free
+    plan: starter
     buildCommand: npm install && npm run build
     staticPublishPath: dist
     headers:
