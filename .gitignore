@@ -1,0 +1,31 @@
+node_modules/
+dist/
+.vite/
+*.local
+__pycache__/
+*.py[cod]
+backend/.env
+.env.local
+uploads/
+backend/uploads/
+.DS_Store
+Thumbs.db
+*.log
+*.pid
+*.lock
+
+# Google Service Account (secrets)
+backend/google-service-account.json
+
+# IDE
+.idea/
+.vscode/
+
+# Launcher scripts (local only)
+LANCER_SMARTTASK.vbs
+launcher.ps1
+backend/watchdog.ps1
+backend/server.pid
+backend/watchdog.lock
+backend/test_results.txt
+logs/
