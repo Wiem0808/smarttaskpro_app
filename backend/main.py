@@ -939,7 +939,7 @@ def setup_database(secret: str):
     departments = [
         ("Direction", "Direction générale", "#6366f1", "building"),
         ("Production", "Production industrielle", "#10b981", "factory"),
-        ("Qualité", "Contrôle qualité", "#f59e0b", "shield-check"),
+        ("Qualité", "Contrôle qualité", "#f59e0b", "shield"),
         ("Commercial", "Service commercial", "#06b6d4", "briefcase"),
         ("Logistique", "Supply chain", "#8b5cf6", "truck"),
     ]
