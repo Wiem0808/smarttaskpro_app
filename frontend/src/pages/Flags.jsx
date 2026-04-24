@@ -316,7 +316,7 @@ export default function Flags() {
                   {f.assignee_name && <span> → {t('assignedTo2')} <strong>{f.assignee_name}</strong></span>}
                 </div>
                 <div style={{ display: 'flex', gap: 6 }}>
-                  {f.status === 'open' && (user?.role === 'manager' || user?.role === 'super_admin') && (
+                  {f.status === 'open' && (
                     <button className="btn btn-sm btn-warning" onClick={() => { setResolution(''); setResolveModal(f); }}>{t('flagTreat')}</button>
                   )}
                   {f.status === 'resolved' && (
