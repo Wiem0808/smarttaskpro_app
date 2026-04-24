@@ -47,9 +47,18 @@ bearer = HTTPBearer()
 
 app = FastAPI(title="SmartTask Pro", version="2.0.0")
 
+# CORS: allow Railway domains + localhost dev
+CORS_ORIGINS = os.getenv("CORS_ORIGINS", "").split(",") if os.getenv("CORS_ORIGINS") else []
+CORS_ORIGINS += [
+    "https://wonderful-emotion-production-b949.up.railway.app",
+    "http://localhost:5174",
+    "http://localhost:5173",
+    "http://127.0.0.1:5174",
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
