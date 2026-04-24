@@ -1,7 +1,7 @@
 // ══════════════════════════════════════════
 // BNZ TASK — Service Worker (PWA)
 // ══════════════════════════════════════════
-const CACHE_NAME = 'bnz-task-v1';
+const CACHE_NAME = 'bnz-task-v2';
 const OFFLINE_URL = '/offline.html';
 
 // Assets to pre-cache
