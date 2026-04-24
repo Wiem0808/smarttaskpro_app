@@ -201,7 +201,7 @@ def require_role(*roles):
 
 @app.post("/api/auth/login", response_model=TokenResponse)
 def login(body: LoginRequest):
-    user = query_one("SELECT * FROM users WHERE email = %s AND is_active = TRUE", (body.email,))
+    user = query_one("SELECT * FROM users WHERE LOWER(email) = LOWER(%s) AND is_active = TRUE", (body.email,))
     if not user or not verify_password(body.password, user["password_hash"]):
         raise HTTPException(401, "Email ou mot de passe incorrect")
     token = create_token(user["id"], user["role"])
