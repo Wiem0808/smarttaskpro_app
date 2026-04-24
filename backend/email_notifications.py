@@ -15,6 +15,7 @@ logger = logging.getLogger("smarttask.email")
 SERVICE_ACCOUNT_FILE = os.path.join(os.path.dirname(__file__), 'google-service-account.json')
 SENDER_EMAIL = os.getenv("SMTP_SENDER", "wiem.hsairi@benozzi.com")
 SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "")
+APP_URL = os.getenv("APP_URL", "https://wonderful-emotion-production-b949.up.railway.app")
 
 
 def _send_via_gmail_api(to_email: str, subject: str, html_body: str) -> bool:
@@ -177,7 +178,7 @@ def notify_task_assigned(to_email: str, to_name: str, task: dict, assigner_name:
       </tr>
     </table>
 
-    {_btn("http://192.168.50.232:5174/tasks", "&#10140;&nbsp;&nbsp;Voir dans SmartTask Pro")}
+    {_btn(f"{APP_URL}/tasks", "&#10140;&nbsp;&nbsp;Voir dans SmartTask Pro")}
     '''
 
     subject = f"Nouvelle tache : {task.get('title', '')}"
@@ -218,7 +219,7 @@ def notify_flag_assigned(to_email: str, to_name: str, flag: dict, raiser_name: s
 
     {task_row}
 
-    {_btn("http://192.168.50.232:5174/flags", "&#10140;&nbsp;&nbsp;Voir dans SmartTask Pro", header_bg)}
+    {_btn(f"{APP_URL}/flags", "&#10140;&nbsp;&nbsp;Voir dans SmartTask Pro", header_bg)}
     '''
 
     subject = f"{'CRITIQUE - ' if urgency == 'critical' else 'URGENT - ' if urgency == 'urgent' else ''}Signalement : {flag.get('task_title', flag.get('description', 'Nouveau probleme'))[:50]}"
@@ -254,7 +255,7 @@ def notify_task_status_changed(to_email: str, to_name: str, task: dict, changer_
       </tr>
     </table>
 
-    {_btn("http://192.168.50.232:5174/tasks", "&#10140;&nbsp;&nbsp;Voir dans SmartTask Pro")}
+    {_btn(f"{APP_URL}/tasks", "&#10140;&nbsp;&nbsp;Voir dans SmartTask Pro")}
     '''
 
     subject = f"Tache mise a jour : {task.get('title', '')}"
@@ -303,7 +304,7 @@ def notify_flag_status_changed(to_email: str, to_name: str, flag: dict, changer_
       </tr>
     </table>
 
-    {_btn("http://192.168.50.232:5174/flags", "&#10140;&nbsp;&nbsp;Voir dans SmartTask Pro", new_color)}
+    {_btn(f"{APP_URL}/flags", "&#10140;&nbsp;&nbsp;Voir dans SmartTask Pro", new_color)}
     '''
 
     subject = f"Signalement mis a jour : {flag.get('description', '')[:50]}"
@@ -350,7 +351,7 @@ def notify_task_overdue(to_email: str, to_name: str, task: dict, days_overdue: i
       Merci de mettre a jour le statut de cette tache ou de contacter votre responsable.
     </p>
 
-    {_btn("http://192.168.50.232:5174/tasks", "&#10140;&nbsp;&nbsp;Voir dans SmartTask Pro", "#ef4444")}
+    {_btn(f"{APP_URL}/tasks", "&#10140;&nbsp;&nbsp;Voir dans SmartTask Pro", "#ef4444")}
     '''
 
     subject = f"⚠ RAPPEL : Tache en retard - {task.get('title', '')}"
