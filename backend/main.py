@@ -86,6 +86,38 @@ def debug_config():
         "database_url_set": bool(os.getenv("DATABASE_URL", "")),
     }
 
+@app.get("/api/debug/test-email")
+def debug_test_email():
+    """Test email sending directly (synchronous, returns error if any)."""
+    try:
+        result = notif._send_via_gmail_api(
+            "wiem.hsairi@benozzi.com",
+            "SmartTask Pro - Test Email",
+            "<h1>Test</h1><p>Email de test depuis Railway</p>"
+        )
+        if result:
+            return {"status": "ok", "method": "gmail_api", "message": "Email sent via Gmail API"}
+        # Try SMTP fallback
+        result2 = notif._send_via_smtp(
+            "wiem.hsairi@benozzi.com",
+            "SmartTask Pro - Test Email",
+            "<h1>Test</h1><p>Email de test depuis Railway (SMTP)</p>"
+        )
+        if result2:
+            return {"status": "ok", "method": "smtp", "message": "Email sent via SMTP"}
+        return {"status": "error", "message": "Both Gmail API and SMTP failed. Check logs."}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@app.get("/api/debug/test-gcal")
+def debug_test_gcal():
+    """Test Google Calendar access directly."""
+    try:
+        cal_id = gcal.get_or_create_smarttask_calendar("wiem.hsairi@benozzi.com")
+        return {"status": "ok" if cal_id else "error", "calendar_id": cal_id, "configured": gcal._is_configured()}
+    except Exception as e:
+        return {"status": "error", "message": str(e), "configured": gcal._is_configured()}
+
 # ── Global Error Handler (prevents crashes) ──
 import logging
 from fastapi.responses import JSONResponse
