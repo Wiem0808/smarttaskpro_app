@@ -1,7 +1,7 @@
 # ══════════════════════════════════════════════════════════════
 # SmartTask Pro — FastAPI Backend (No Projects)
 # ══════════════════════════════════════════════════════════════
-import os
+import os, json
 from datetime import datetime, timedelta, timezone
 from typing import Optional, List
 
@@ -1006,6 +1006,111 @@ def debug_database(secret: str):
         "user_count": len(users),
         "dept_count": len(departments),
     }
+
+
+@app.post("/api/migrate/{secret}")
+def migrate_data(secret: str, data: dict):
+    """Import data from local database dump."""
+    if secret != "init-smarttask-2026":
+        raise HTTPException(403, "Invalid key")
+
+    results = []
+
+    try:
+        # Clear existing data (in correct order for FK constraints)
+        for table in ["knowledge_base", "attachments", "notifications", "user_stats", "flags", "task_dependencies", "tasks", "users", "departments"]:
+            execute(f"DELETE FROM {table}")
+            results.append(f"[CLEAR] {table}")
+
+        # Import departments
+        for d in data.get("departments", []):
+            execute(
+                "INSERT INTO departments (id, name, description, color, icon, manager_id, created_at, updated_at) "
+                "VALUES (%s, %s, %s, %s, %s, %s, %s, %s) ON CONFLICT (id) DO NOTHING",
+                (d["id"], d["name"], d.get("description"), d.get("color", "#3b82f6"),
+                 d.get("icon", ""), d.get("manager_id"), d.get("created_at"), d.get("updated_at"))
+            )
+        results.append(f"[+] {len(data.get('departments', []))} départements importés")
+
+        # Import users
+        for u in data.get("users", []):
+            execute(
+                "INSERT INTO users (id, email, full_name, avatar_url, password_hash, role, department_id, "
+                "google_id, daily_capacity, is_active, created_at, updated_at) "
+                "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) ON CONFLICT (id) DO NOTHING",
+                (u["id"], u["email"], u["full_name"], u.get("avatar_url"), u.get("password_hash"),
+                 u.get("role", "employee"), u.get("department_id"), u.get("google_id"),
+                 u.get("daily_capacity", 8), u.get("is_active", True), u.get("created_at"), u.get("updated_at"))
+            )
+        results.append(f"[+] {len(data.get('users', []))} utilisateurs importés")
+
+        # Import tasks
+        for t in data.get("tasks", []):
+            execute(
+                "INSERT INTO tasks (id, title, description, department_id, assigned_to, created_by, status, "
+                "importance, estimated_hours, deadline, priority_score, google_event_id, started_at, "
+                "completed_at, created_at, updated_at) "
+                "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) ON CONFLICT (id) DO NOTHING",
+                (t["id"], t["title"], t.get("description"), t.get("department_id"), t.get("assigned_to"),
+                 t["created_by"], t.get("status", "todo"), t.get("importance", 3),
+                 t.get("estimated_hours", 1), t.get("deadline"), t.get("priority_score", 0),
+                 t.get("google_event_id"), t.get("started_at"), t.get("completed_at"),
+                 t.get("created_at"), t.get("updated_at"))
+            )
+        results.append(f"[+] {len(data.get('tasks', []))} tâches importées")
+
+        # Import flags
+        for f in data.get("flags", []):
+            execute(
+                "INSERT INTO flags (id, task_id, raised_by, assigned_to, category, urgency, status, "
+                "description, resolution, sla_deadline, resolution_deadline, blocked_duration, "
+                "created_at, resolved_at, closed_at) "
+                "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) ON CONFLICT (id) DO NOTHING",
+                (f["id"], f["task_id"], f["raised_by"], f.get("assigned_to"), f.get("category"),
+                 f.get("urgency"), f.get("status", "open"), f["description"], f.get("resolution"),
+                 f.get("sla_deadline"), f.get("resolution_deadline"), f.get("blocked_duration"),
+                 f.get("created_at"), f.get("resolved_at"), f.get("closed_at"))
+            )
+        results.append(f"[+] {len(data.get('flags', []))} flags importés")
+
+        # Import user_stats
+        for s in data.get("user_stats", []):
+            execute(
+                "INSERT INTO user_stats (user_id, completion_streak, reliability_score, tasks_completed, "
+                "flags_resolved, badges, updated_at) "
+                "VALUES (%s,%s,%s,%s,%s,%s,%s) ON CONFLICT (user_id) DO NOTHING",
+                (s["user_id"], s.get("completion_streak", 0), s.get("reliability_score", 100),
+                 s.get("tasks_completed", 0), s.get("flags_resolved", 0),
+                 json.dumps(s.get("badges", [])), s.get("updated_at"))
+            )
+        results.append(f"[+] {len(data.get('user_stats', []))} stats importées")
+
+        # Import notifications
+        for n in data.get("notifications", []):
+            execute(
+                "INSERT INTO notifications (id, user_id, type, title, body, link, is_read, created_at) "
+                "VALUES (%s,%s,%s,%s,%s,%s,%s,%s) ON CONFLICT (id) DO NOTHING",
+                (n["id"], n["user_id"], n["type"], n.get("title"), n.get("body"),
+                 n.get("link"), n.get("is_read", False), n.get("created_at"))
+            )
+        results.append(f"[+] {len(data.get('notifications', []))} notifications importées")
+
+        # Reset sequences
+        for table in ["departments", "users", "tasks", "flags", "notifications", "knowledge_base", "attachments"]:
+            try:
+                execute(f"SELECT setval(pg_get_serial_sequence('{table}', 'id'), COALESCE((SELECT MAX(id) FROM {table}), 1))")
+            except:
+                pass
+        results.append("[OK] Séquences réinitialisées")
+
+        # Update department manager FKs
+        execute("UPDATE departments SET manager_id = NULL WHERE manager_id NOT IN (SELECT id FROM users)")
+        results.append("[OK] FK manager_id nettoyées")
+
+    except Exception as e:
+        results.append(f"[ERROR] {str(e)}")
+
+    return {"results": results}
 
 
 # ══════════════════════════════════════════
