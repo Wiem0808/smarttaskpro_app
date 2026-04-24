@@ -923,6 +923,58 @@ def mark_read(nid: int, user=Depends(get_current_user)):
 
 
 # ══════════════════════════════════════════
+# ══════════════════════════════════════════
+#  DATABASE SETUP (one-time, for Railway deployment)
+# ══════════════════════════════════════════
+
+@app.get("/api/setup/{secret}")
+def setup_database(secret: str):
+    """One-time setup: create departments + admin user. Use secret to prevent abuse."""
+    if secret != "init-smarttask-2026":
+        raise HTTPException(403, "Invalid setup key")
+
+    results = []
+
+    # Create departments
+    departments = [
+        ("Direction", "Direction générale", "#6366f1", "building"),
+        ("Production", "Production industrielle", "#10b981", "factory"),
+        ("Qualité", "Contrôle qualité", "#f59e0b", "shield-check"),
+        ("Commercial", "Service commercial", "#06b6d4", "briefcase"),
+        ("Logistique", "Supply chain", "#8b5cf6", "truck"),
+    ]
+    for name, desc, color, icon in departments:
+        existing = query_one("SELECT id FROM departments WHERE name = %s", (name,))
+        if not existing:
+            execute_returning(
+                "INSERT INTO departments (name, description, color, icon) VALUES (%s, %s, %s, %s) RETURNING id",
+                (name, desc, color, icon)
+            )
+            results.append(f"[+] Département '{name}' créé")
+        else:
+            results.append(f"[OK] Département '{name}' existe déjà")
+
+    # Create admin user
+    admin_email = "admin@smarttask.local"
+    existing_admin = query_one("SELECT id FROM users WHERE email = %s", (admin_email,))
+    if not existing_admin:
+        dept = query_one("SELECT id FROM departments WHERE name = 'Direction'")
+        dept_id = dept["id"] if dept else None
+        hashed = hash_password("admin123")
+        row = execute_returning(
+            "INSERT INTO users (email, full_name, password_hash, role, department_id, daily_capacity) "
+            "VALUES (%s, %s, %s, %s, %s, %s) RETURNING id",
+            (admin_email, "Administrateur", hashed, "super_admin", dept_id, 8)
+        )
+        execute("INSERT INTO user_stats (user_id) VALUES (%s) ON CONFLICT DO NOTHING", (row["id"],))
+        results.append(f"[+] Admin créé: {admin_email} / admin123")
+    else:
+        results.append(f"[OK] Admin existe déjà: {admin_email}")
+
+    return {"results": results}
+
+
+# ══════════════════════════════════════════
 #  STARTUP
 # ══════════════════════════════════════════
 
