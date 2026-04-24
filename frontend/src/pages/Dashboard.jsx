@@ -45,7 +45,7 @@ export default function Dashboard() {
         ))}
       </div>
 
-      {(user?.role === 'super_admin' || user?.role === 'manager') && (
+      {(
         <div className="section-card" style={{ marginTop: 24 }}>
           <h2 className="section-title">{t('workloadTitle')}</h2>
           <div className="heatmap-table-wrap">

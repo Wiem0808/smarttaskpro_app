@@ -19,8 +19,8 @@ export default function Layout() {
 
   const NAV = [
     { to: '/',            icon: LayoutDashboard, labelKey: 'dashboard' },
-    { to: '/departments', icon: Building2,       labelKey: 'departments', roles: ['super_admin'] },
-    { to: '/users',       icon: UsersRound,      labelKey: 'users',       roles: ['super_admin', 'manager'] },
+    { to: '/departments', icon: Building2,       labelKey: 'departments' },
+    { to: '/users',       icon: UsersRound,      labelKey: 'users' },
     { to: '/tasks',       icon: ListChecks,      labelKey: 'tasks' },
     { to: '/flags',       icon: Flag,            labelKey: 'flags' },
     { to: '/calendar',    icon: CalendarDays,    labelKey: 'calendar' },

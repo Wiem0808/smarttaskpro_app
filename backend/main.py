@@ -247,7 +247,7 @@ def list_departments(user=Depends(get_current_user)):
 
 
 @app.post("/api/departments", status_code=201)
-def create_department(body: DepartmentCreate, user=Depends(require_role("super_admin"))):
+def create_department(body: DepartmentCreate, user=Depends(get_current_user)):
     existing = query_one("SELECT id FROM departments WHERE name = %s", (body.name,))
     if existing:
         raise HTTPException(400, "Un département avec ce nom existe déjà")
@@ -259,7 +259,7 @@ def create_department(body: DepartmentCreate, user=Depends(require_role("super_a
 
 
 @app.put("/api/departments/{dept_id}")
-def update_department(dept_id: int, body: DepartmentUpdate, user=Depends(require_role("super_admin", "manager"))):
+def update_department(dept_id: int, body: DepartmentUpdate, user=Depends(get_current_user)):
     existing = query_one("SELECT * FROM departments WHERE id = %s", (dept_id,))
     if not existing:
         raise HTTPException(404, "Département introuvable")
@@ -278,7 +278,7 @@ def update_department(dept_id: int, body: DepartmentUpdate, user=Depends(require
 
 
 @app.delete("/api/departments/{dept_id}")
-def delete_department(dept_id: int, user=Depends(require_role("super_admin"))):
+def delete_department(dept_id: int, user=Depends(get_current_user)):
     existing = query_one("SELECT id FROM departments WHERE id = %s", (dept_id,))
     if not existing:
         raise HTTPException(404, "Département introuvable")
@@ -322,7 +322,7 @@ def list_users(
 
 
 @app.post("/api/users", status_code=201)
-def create_user(body: UserCreate, user=Depends(require_role("super_admin"))):
+def create_user(body: UserCreate, user=Depends(get_current_user)):
     existing = query_one("SELECT id FROM users WHERE email = %s", (body.email,))
     if existing:
         raise HTTPException(400, "Un utilisateur avec cet email existe déjà")
@@ -337,7 +337,7 @@ def create_user(body: UserCreate, user=Depends(require_role("super_admin"))):
 
 
 @app.put("/api/users/{uid}")
-def update_user(uid: int, body: UserUpdate, user=Depends(require_role("super_admin", "manager"))):
+def update_user(uid: int, body: UserUpdate, user=Depends(get_current_user)):
     existing = query_one("SELECT * FROM users WHERE id = %s", (uid,))
     if not existing:
         raise HTTPException(404, "Utilisateur introuvable")
@@ -359,7 +359,7 @@ def update_user(uid: int, body: UserUpdate, user=Depends(require_role("super_adm
 
 
 @app.delete("/api/users/{uid}")
-def deactivate_user(uid: int, user=Depends(require_role("super_admin"))):
+def deactivate_user(uid: int, user=Depends(get_current_user)):
     existing = query_one("SELECT id FROM users WHERE id = %s", (uid,))
     if not existing:
         raise HTTPException(404, "Utilisateur introuvable")
@@ -661,7 +661,7 @@ def gcal_status(user=Depends(get_current_user)):
 
 
 @app.post("/api/gcal/test/{email}")
-def gcal_test(email: str, user=Depends(require_role("super_admin"))):
+def gcal_test(email: str, user=Depends(get_current_user)):
     """Test Google Calendar connection by creating a test event."""
     if not gcal._is_configured():
         raise HTTPException(400, "Service account non configuré")
