@@ -162,18 +162,13 @@ def _deadline_reminder_loop():
         _time.sleep(3600)  # Wait 1 hour
 
 # Start the reminder thread only once (use env var to prevent duplicate on multi-worker)
-_scheduler_lock_file = os.path.join(os.path.dirname(__file__), '.scheduler_pid')
+_scheduler_started = False
 def _start_scheduler_once():
-    """Ensure only one worker runs the deadline scheduler."""
-    import fcntl
-    try:
-        _lock_fd = open(_scheduler_lock_file, 'w')
-        fcntl.flock(_lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        _lock_fd.write(str(os.getpid()))
-        _lock_fd.flush()
-        threading.Thread(target=_deadline_reminder_loop, daemon=True, name="deadline-reminders").start()
-    except (IOError, OSError):
-        pass  # Another worker already has the lock
+    global _scheduler_started
+    if _scheduler_started:
+        return
+    _scheduler_started = True
+    threading.Thread(target=_deadline_reminder_loop, daemon=True, name="deadline-reminders").start()
 
 _start_scheduler_once()
 
