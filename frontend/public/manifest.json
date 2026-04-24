@@ -1,18 +1,45 @@
 {
-  "name": "SmartTask Pro",
-  "short_name": "SmartTask",
-  "description": "Planification intelligente des tâches",
+  "name": "BNZ TASK",
+  "short_name": "BNZ TASK",
+  "description": "BNZ Engineering — Gestion intelligente des tâches et projets",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0a0e1a",
   "theme_color": "#0a0e1a",
   "orientation": "any",
+  "scope": "/",
+  "lang": "fr",
+  "categories": ["business", "productivity"],
   "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
     {
       "src": "/favicon.svg",
       "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "type": "image/svg+xml"
+    }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Tâches",
+      "url": "/tasks",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Signalements",
+      "url": "/flags",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
     }
   ]
 }

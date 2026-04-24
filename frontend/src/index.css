@@ -941,6 +941,7 @@ a:hover { color: var(--accent-hover); }
 }
 .login-hero { max-width: 400px; }
 .login-hero svg { color: var(--accent); margin-bottom: 16px; }
+.login-logo { max-width: 220px; margin-bottom: 20px; filter: brightness(0) invert(1); }
 .login-hero h1 { font-size: 2.5rem; font-weight: 900; letter-spacing: -.04em; margin-bottom: 10px; }
 .login-hero h1 span { color: var(--accent); }
 .login-hero > p { color: var(--text-muted); font-size: 1rem; line-height: 1.6; margin-bottom: 32px; }

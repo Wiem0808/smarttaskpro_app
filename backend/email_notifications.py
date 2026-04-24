@@ -1,5 +1,5 @@
 # ══════════════════════════════════════════════════════════════
-# SmartTask Pro — Email Notifications (Gmail API + SMTP fallback)
+# BNZ TASK — Email Notifications (Gmail API + SMTP fallback)
 # ══════════════════════════════════════════════════════════════
 import os
 import logging
@@ -10,7 +10,7 @@ from email.mime.multipart import MIMEMultipart
 from typing import Optional
 import threading
 
-logger = logging.getLogger("smarttask.email")
+logger = logging.getLogger("BNZ TASK.email")
 
 SERVICE_ACCOUNT_FILE = os.path.join(os.path.dirname(__file__), 'google-service-account.json')
 SENDER_EMAIL = os.getenv("SMTP_SENDER", "wiem.hsairi@benozzi.com")
@@ -46,7 +46,7 @@ def _send_via_gmail_api(to_email: str, subject: str, html_body: str) -> bool:
 
         msg = MIMEMultipart('alternative')
         msg['To'] = to_email
-        msg['From'] = f"SmartTask Pro <{SENDER_EMAIL}>"
+        msg['From'] = f"BNZ TASK <{SENDER_EMAIL}>"
         msg['Subject'] = subject
         msg.attach(MIMEText(html_body, 'html', 'utf-8'))
 
@@ -67,7 +67,7 @@ def _send_via_smtp(to_email: str, subject: str, html_body: str) -> bool:
     try:
         msg = MIMEMultipart('alternative')
         msg['To'] = to_email
-        msg['From'] = f"SmartTask Pro <{SENDER_EMAIL}>"
+        msg['From'] = f"BNZ TASK <{SENDER_EMAIL}>"
         msg['Subject'] = subject
         msg.attach(MIMEText(html_body, 'html', 'utf-8'))
 
@@ -138,7 +138,7 @@ def _wrap(header_bg, title, subtitle, body_html):
           <tr>
             <td style="padding:16px 32px; background:#f9fafb; text-align:center; border-top:1px solid #e5e7eb;">
               <p style="margin:0; font-size:12px; color:#9ca3af; font-family:Arial,sans-serif;">
-                Cet email a ete envoye automatiquement par SmartTask Pro
+                Cet email a ete envoye automatiquement par BNZ TASK
               </p>
             </td>
           </tr>
@@ -188,11 +188,11 @@ def notify_task_assigned(to_email: str, to_name: str, task: dict, assigner_name:
       </tr>
     </table>
 
-    {_btn(f"{APP_URL}/tasks", "&#10140;&nbsp;&nbsp;Voir dans SmartTask Pro")}
+    {_btn(f"{APP_URL}/tasks", "&#10140;&nbsp;&nbsp;Voir dans BNZ TASK")}
     '''
 
     subject = f"Nouvelle tache : {task.get('title', '')}"
-    html = _wrap("linear-gradient(135deg, #4f46e5, #7c3aed)", "&#128203; Nouvelle Tache Assignee", "SmartTask Pro", body)
+    html = _wrap("linear-gradient(135deg, #4f46e5, #7c3aed)", "&#128203; Nouvelle Tache Assignee", "BNZ TASK", body)
     send_email_async(to_email, subject, html)
 
 
@@ -229,11 +229,11 @@ def notify_flag_assigned(to_email: str, to_name: str, flag: dict, raiser_name: s
 
     {task_row}
 
-    {_btn(f"{APP_URL}/flags", "&#10140;&nbsp;&nbsp;Voir dans SmartTask Pro", header_bg)}
+    {_btn(f"{APP_URL}/flags", "&#10140;&nbsp;&nbsp;Voir dans BNZ TASK", header_bg)}
     '''
 
     subject = f"{'CRITIQUE - ' if urgency == 'critical' else 'URGENT - ' if urgency == 'urgent' else ''}Signalement : {flag.get('task_title', flag.get('description', 'Nouveau probleme'))[:50]}"
-    html = _wrap(f"linear-gradient(135deg, {header_bg}, #1e1e2e)", "&#128681; Signalement Assigne", "SmartTask Pro - Action requise", body)
+    html = _wrap(f"linear-gradient(135deg, {header_bg}, #1e1e2e)", "&#128681; Signalement Assigne", "BNZ TASK - Action requise", body)
     send_email_async(to_email, subject, html)
 
 
@@ -265,11 +265,11 @@ def notify_task_status_changed(to_email: str, to_name: str, task: dict, changer_
       </tr>
     </table>
 
-    {_btn(f"{APP_URL}/tasks", "&#10140;&nbsp;&nbsp;Voir dans SmartTask Pro")}
+    {_btn(f"{APP_URL}/tasks", "&#10140;&nbsp;&nbsp;Voir dans BNZ TASK")}
     '''
 
     subject = f"Tache mise a jour : {task.get('title', '')}"
-    html = _wrap(f"linear-gradient(135deg, {new_color}, #1e1e2e)", "&#128203; Statut Modifie", "SmartTask Pro", body)
+    html = _wrap(f"linear-gradient(135deg, {new_color}, #1e1e2e)", "&#128203; Statut Modifie", "BNZ TASK", body)
     send_email_async(to_email, subject, html)
 
 
@@ -314,11 +314,11 @@ def notify_flag_status_changed(to_email: str, to_name: str, flag: dict, changer_
       </tr>
     </table>
 
-    {_btn(f"{APP_URL}/flags", "&#10140;&nbsp;&nbsp;Voir dans SmartTask Pro", new_color)}
+    {_btn(f"{APP_URL}/flags", "&#10140;&nbsp;&nbsp;Voir dans BNZ TASK", new_color)}
     '''
 
     subject = f"Signalement mis a jour : {flag.get('description', '')[:50]}"
-    html = _wrap(f"linear-gradient(135deg, {new_color}, #1e1e2e)", "&#128681; Signalement Modifie", "SmartTask Pro", body)
+    html = _wrap(f"linear-gradient(135deg, {new_color}, #1e1e2e)", "&#128681; Signalement Modifie", "BNZ TASK", body)
     send_email_async(to_email, subject, html)
 
 
@@ -361,9 +361,9 @@ def notify_task_overdue(to_email: str, to_name: str, task: dict, days_overdue: i
       Merci de mettre a jour le statut de cette tache ou de contacter votre responsable.
     </p>
 
-    {_btn(f"{APP_URL}/tasks", "&#10140;&nbsp;&nbsp;Voir dans SmartTask Pro", "#ef4444")}
+    {_btn(f"{APP_URL}/tasks", "&#10140;&nbsp;&nbsp;Voir dans BNZ TASK", "#ef4444")}
     '''
 
     subject = f"⚠ RAPPEL : Tache en retard - {task.get('title', '')}"
-    html = _wrap("linear-gradient(135deg, #ef4444, #991b1b)", "⏰ Rappel — Deadline Depassee", "SmartTask Pro - Action urgente", body)
+    html = _wrap("linear-gradient(135deg, #ef4444, #991b1b)", "⏰ Rappel — Deadline Depassee", "BNZ TASK - Action urgente", body)
     send_email_async(to_email, subject, html)

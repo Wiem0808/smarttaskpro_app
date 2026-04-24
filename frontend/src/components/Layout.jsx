@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Building2, UsersRound,
-  ListChecks, Flag, LogOut, Zap, CalendarDays, Menu, X,
+  ListChecks, Flag, LogOut, CalendarDays, Menu, X,
 } from 'lucide-react';
 import useStore from '../store';
 import { useLang } from '../hooks/useLang';
@@ -38,7 +38,7 @@ export default function Layout() {
           {sidebarOpen ? <X size={22} /> : <Menu size={22} />}
         </button>
         <div className="mobile-topbar-brand">
-          <Zap size={18} /> <span>SmartTask</span>
+          <img src="/logo-bnz.png" alt="BNZ" style={{ height: 22 }} /> <span>BNZ TASK</span>
         </div>
         <div className="mobile-topbar-avatar">{user?.full_name?.charAt(0)}</div>
       </header>
@@ -49,8 +49,8 @@ export default function Layout() {
       {/* ── Sidebar ── */}
       <aside className={`sidebar ${sidebarOpen ? 'sidebar-open' : ''}`}>
         <div className="sidebar-brand">
-          <Zap size={22} />
-          <span>SmartTask</span>
+          <img src="/logo-bnz.png" alt="BNZ" style={{ height: 24 }} />
+          <span>BNZ TASK</span>
         </div>
 
         <nav className="sidebar-nav">

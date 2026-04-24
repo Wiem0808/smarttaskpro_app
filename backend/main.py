@@ -1,5 +1,5 @@
 # ══════════════════════════════════════════════════════════════
-# SmartTask Pro — FastAPI Backend (No Projects)
+# BNZ TASK — FastAPI Backend (No Projects)
 # ══════════════════════════════════════════════════════════════
 import os, json
 from datetime import datetime, timedelta, timezone
@@ -45,7 +45,7 @@ def verify_password(plain: str, hashed: str) -> bool:
 
 bearer = HTTPBearer()
 
-app = FastAPI(title="SmartTask Pro", version="2.0.0")
+app = FastAPI(title="BNZ TASK", version="2.0.0")
 
 # CORS: allow Railway domains + localhost dev
 CORS_ORIGINS = os.getenv("CORS_ORIGINS", "").split(",") if os.getenv("CORS_ORIGINS") else []
@@ -67,7 +67,7 @@ app.add_middleware(
 # ── Health Check (required by Render) ──
 @app.get("/api/health")
 def health_check():
-    return {"status": "ok", "service": "SmartTask Pro API"}
+    return {"status": "ok", "service": "BNZ TASK API"}
 
 
 # ── Global Error Handler (prevents crashes) ──
@@ -76,7 +76,7 @@ from fastapi.responses import JSONResponse
 from starlette.requests import Request
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
-logger = logging.getLogger("smarttask")
+logger = logging.getLogger("BNZ TASK")
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
@@ -668,8 +668,8 @@ def gcal_test(email: str, user=Depends(get_current_user)):
     
     from datetime import datetime, timedelta, timezone
     test_event = {
-        "summary": "🧪 Test SmartTask Pro",
-        "description": "Ceci est un test de connexion SmartTask → Google Calendar.\nSi vous voyez cet événement, la synchronisation fonctionne ! ✅",
+        "summary": "🧪 Test BNZ TASK",
+        "description": "Ceci est un test de connexion BNZ TASK → Google Calendar.\nSi vous voyez cet événement, la synchronisation fonctionne ! ✅",
         "start": {"dateTime": (datetime.now(timezone.utc) + timedelta(hours=1)).isoformat(), "timeZone": "Europe/Rome"},
         "end": {"dateTime": (datetime.now(timezone.utc) + timedelta(hours=2)).isoformat(), "timeZone": "Europe/Rome"},
         "colorId": "10",
@@ -989,7 +989,7 @@ def mark_read(nid: int, user=Depends(get_current_user)):
 @app.get("/api/setup/{secret}")
 def setup_database(secret: str):
     """One-time setup: create departments + admin user. Use secret to prevent abuse."""
-    if secret != "init-smarttask-2026":
+    if secret != "init-BNZ TASK-2026":
         raise HTTPException(403, "Invalid setup key")
 
     results = []
@@ -1014,7 +1014,7 @@ def setup_database(secret: str):
             results.append(f"[OK] Département '{name}' existe déjà")
 
     # Create admin user
-    admin_email = "admin@smarttask.local"
+    admin_email = "admin@BNZ TASK.local"
     existing_admin = query_one("SELECT id FROM users WHERE email = %s", (admin_email,))
     if not existing_admin:
         dept = query_one("SELECT id FROM departments WHERE name = 'Direction'")
@@ -1053,7 +1053,7 @@ def setup_database(secret: str):
 @app.get("/api/debug/{secret}")
 def debug_database(secret: str):
     """Temporary: view database contents."""
-    if secret != "init-smarttask-2026":
+    if secret != "init-BNZ TASK-2026":
         raise HTTPException(403, "Invalid key")
 
     users = query_all("SELECT id, email, full_name, role, department_id FROM users ORDER BY id")
@@ -1070,7 +1070,7 @@ def debug_database(secret: str):
 @app.post("/api/migrate/{secret}")
 def migrate_data(secret: str, data: dict):
     """Import data from local database dump."""
-    if secret != "init-smarttask-2026":
+    if secret != "init-BNZ TASK-2026":
         raise HTTPException(403, "Invalid key")
 
     results = []

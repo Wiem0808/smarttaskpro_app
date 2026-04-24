@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Zap, Mail, Lock, ArrowRight } from 'lucide-react';
+import { Mail, Lock, ArrowRight } from 'lucide-react';
 import useStore from '../store';
 import { useLang } from '../hooks/useLang';
 
 export default function Login() {
-  const [email, setEmail]       = useState('admin@smarttask.local');
-  const [password, setPassword] = useState('admin');
+  const [email, setEmail]       = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError]       = useState('');
   const [loading, setLoading]   = useState(false);
   const login = useStore(s => s.login);
@@ -30,8 +30,8 @@ export default function Login() {
     <div className="login-page">
       <div className="login-left">
         <div className="login-hero">
-          <Zap size={48} strokeWidth={2.5} />
-          <h1>SmartTask <span>Pro</span></h1>
+          <img src="/logo-bnz.png" alt="BNZ Engineering" className="login-logo" />
+          <h1>BNZ <span>TASK</span></h1>
           <p>{t('appTagline')}</p>
           <div className="login-features">
             <div className="login-feature">{t('feat1')}</div>

@@ -1,5 +1,5 @@
 # ══════════════════════════════════════════════════════════════
-# SmartTask Pro — Google Calendar Integration (Service Account)
+# BNZ TASK — Google Calendar Integration (Service Account)
 # ══════════════════════════════════════════════════════════════
 import os
 import json
@@ -10,7 +10,7 @@ from typing import Optional
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 
-logger = logging.getLogger("smarttask.gcal")
+logger = logging.getLogger("BNZ TASK.gcal")
 
 SCOPES = ['https://www.googleapis.com/auth/calendar', 'https://www.googleapis.com/auth/calendar.events']
 SERVICE_ACCOUNT_FILE = os.path.join(os.path.dirname(__file__), 'google-service-account.json')
@@ -72,12 +72,12 @@ def _get_service(user_email: str):
 
 
 # ══════════════════════════════════════════
-#  SMARTTASK CALENDAR (dedicated calendar)
+#  BNZ TASK CALENDAR (dedicated calendar)
 # ══════════════════════════════════════════
 
-def get_or_create_smarttask_calendar(user_email: str) -> Optional[str]:
+def get_or_create_BNZ TASK_calendar(user_email: str) -> Optional[str]:
     """
-    Find or create a 'SmartTask Pro' secondary calendar for the user.
+    Find or create a 'BNZ TASK' secondary calendar for the user.
     Returns the calendar ID or None.
     """
     service = _get_service(user_email)
@@ -88,13 +88,13 @@ def get_or_create_smarttask_calendar(user_email: str) -> Optional[str]:
         # Check if calendar already exists
         calendars = service.calendarList().list().execute()
         for cal in calendars.get('items', []):
-            if cal.get('summary') == '📋 SmartTask Pro':
+            if cal.get('summary') == '📋 BNZ TASK':
                 return cal['id']
         
         # Create it
         new_cal = service.calendars().insert(body={
-            'summary': '📋 SmartTask Pro',
-            'description': 'Tâches et signalements synchronisés depuis SmartTask Pro',
+            'summary': '📋 BNZ TASK',
+            'description': 'Tâches et signalements synchronisés depuis BNZ TASK',
             'timeZone': 'Europe/Rome',
         }).execute()
         
@@ -105,7 +105,7 @@ def get_or_create_smarttask_calendar(user_email: str) -> Optional[str]:
             colorRgbFormat=True,
         ).execute()
         
-        logger.info("Created SmartTask calendar for %s: %s", user_email, new_cal['id'])
+        logger.info("Created BNZ TASK calendar for %s: %s", user_email, new_cal['id'])
         return new_cal['id']
     except Exception as e:
         logger.error("Calendar create/find error for %s: %s", user_email, e)
@@ -117,7 +117,7 @@ def get_or_create_smarttask_calendar(user_email: str) -> Optional[str]:
 # ══════════════════════════════════════════
 
 def task_to_event(task: dict) -> dict:
-    """Convert a SmartTask task to a Google Calendar event body."""
+    """Convert a BNZ TASK task to a Google Calendar event body."""
     stars = '★' * task.get('importance', 3) + '☆' * (5 - task.get('importance', 3))
     
     description_lines = [
@@ -131,7 +131,7 @@ def task_to_event(task: dict) -> dict:
     if task.get('link'):
         description_lines.append(f"\n🔗 Lien: {task['link']}")
     
-    description_lines.append(f"\n— Synchronisé depuis SmartTask Pro")
+    description_lines.append(f"\n— Synchronisé depuis BNZ TASK")
     
     event = {
         'summary': f"📋 {task['title']}",
@@ -145,7 +145,7 @@ def task_to_event(task: dict) -> dict:
             ],
         },
         'source': {
-            'title': 'SmartTask Pro',
+            'title': 'BNZ TASK',
             'url': f'{APP_URL}/tasks',
         },
     }
@@ -173,7 +173,7 @@ def task_to_event(task: dict) -> dict:
 
 
 def flag_to_event(flag: dict) -> dict:
-    """Convert a SmartTask flag to a Google Calendar event body."""
+    """Convert a BNZ TASK flag to a Google Calendar event body."""
     urgency_emoji = {'normal': '🟢', 'urgent': '🟡', 'critical': '🔴'}
     emoji = urgency_emoji.get(flag.get('urgency', 'normal'), '🟢')
     
@@ -184,7 +184,7 @@ def flag_to_event(flag: dict) -> dict:
     if flag.get('raiser_name'):
         description_lines.append(f"👤 Signalé par: {flag['raiser_name']}")
     
-    description_lines.append(f"\n— Synchronisé depuis SmartTask Pro")
+    description_lines.append(f"\n— Synchronisé depuis BNZ TASK")
     
     event = {
         'summary': f"🚩 {emoji} FLAG: {flag.get('task_title', flag.get('title', 'Signalement'))}",
@@ -195,7 +195,7 @@ def flag_to_event(flag: dict) -> dict:
             'overrides': _flag_reminders(flag.get('urgency', 'normal')),
         },
         'source': {
-            'title': 'SmartTask Pro',
+            'title': 'BNZ TASK',
             'url': f'{APP_URL}/flags',
         },
     }
@@ -240,12 +240,12 @@ def _flag_reminders(urgency: str) -> list:
 # ══════════════════════════════════════════
 
 def create_calendar_event(user_email: str, event_body: dict) -> Optional[str]:
-    """Create an event in the user's SmartTask calendar. Returns Google event ID."""
+    """Create an event in the user's BNZ TASK calendar. Returns Google event ID."""
     service = _get_service(user_email)
     if not service:
         return None
     
-    cal_id = get_or_create_smarttask_calendar(user_email)
+    cal_id = get_or_create_BNZ TASK_calendar(user_email)
     if not cal_id:
         cal_id = 'primary'
     
@@ -268,7 +268,7 @@ def update_calendar_event(user_email: str, google_event_id: str, event_body: dic
     if not service:
         return False
     
-    cal_id = get_or_create_smarttask_calendar(user_email)
+    cal_id = get_or_create_BNZ TASK_calendar(user_email)
     if not cal_id:
         cal_id = 'primary'
     
@@ -292,7 +292,7 @@ def delete_calendar_event(user_email: str, google_event_id: str) -> bool:
     if not service:
         return False
     
-    cal_id = get_or_create_smarttask_calendar(user_email)
+    cal_id = get_or_create_BNZ TASK_calendar(user_email)
     if not cal_id:
         cal_id = 'primary'
     
