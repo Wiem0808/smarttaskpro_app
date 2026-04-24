@@ -487,6 +487,10 @@ def _sync_task_to_gcal(task_id: int, user_id: int):
                         "INSERT INTO google_calendar_events (user_id, task_id, google_event_id) VALUES (%s, %s, %s)",
                         (user_id, task_id, gid)
                     )
+                    execute(
+                        "UPDATE tasks SET google_event_id = %s WHERE id = %s",
+                        (gid, task_id)
+                    )
         except Exception as e:
             logger.error("Task sync error: %s", e)
     threading.Thread(target=_do_sync, daemon=True).start()
