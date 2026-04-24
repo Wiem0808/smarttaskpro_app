@@ -69,6 +69,23 @@ app.add_middleware(
 def health_check():
     return {"status": "ok", "service": "SmartTask Pro API"}
 
+# ── Temporary Debug Endpoint (REMOVE AFTER TESTING) ──
+@app.get("/api/debug/config")
+def debug_config():
+    sa_file = os.path.join(os.path.dirname(__file__), 'google-service-account.json')
+    sa_env = os.getenv("GOOGLE_SERVICE_ACCOUNT_JSON", "")
+    app_url = os.getenv("APP_URL", "NOT SET")
+    smtp_pwd = os.getenv("SMTP_PASSWORD", "")
+    return {
+        "service_account_file_exists": os.path.isfile(sa_file),
+        "service_account_env_set": bool(sa_env),
+        "service_account_env_length": len(sa_env),
+        "app_url": app_url,
+        "smtp_sender": os.getenv("SMTP_SENDER", "wiem.hsairi@benozzi.com"),
+        "smtp_password_set": bool(smtp_pwd),
+        "database_url_set": bool(os.getenv("DATABASE_URL", "")),
+    }
+
 # ── Global Error Handler (prevents crashes) ──
 import logging
 from fastapi.responses import JSONResponse
