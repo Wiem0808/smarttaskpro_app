@@ -545,6 +545,24 @@ def _delete_gcal_event(task_id: int = None, flag_id: int = None):
     threading.Thread(target=_do_delete, daemon=True).start()
 
 
+@app.get("/api/tasks/{tid}")
+def get_task(tid: int, user=Depends(get_current_user)):
+    row = query_one("""
+        SELECT t.*,
+               d.name AS department_name,
+               ua.full_name AS assigned_name,
+               uc.full_name AS creator_name
+        FROM tasks t
+        LEFT JOIN departments d ON t.department_id = d.id
+        LEFT JOIN users ua ON t.assigned_to = ua.id
+        JOIN users uc ON t.created_by = uc.id
+        WHERE t.id = %s
+    """, (tid,))
+    if not row:
+        raise HTTPException(404, "Tâche introuvable")
+    return dict(row)
+
+
 @app.post("/api/tasks", status_code=201)
 def create_task(body: TaskCreate, user=Depends(get_current_user)):
     row = execute_returning("""
