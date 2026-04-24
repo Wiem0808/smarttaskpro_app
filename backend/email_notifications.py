@@ -17,6 +17,16 @@ SENDER_EMAIL = os.getenv("SMTP_SENDER", "wiem.hsairi@benozzi.com")
 SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "")
 APP_URL = os.getenv("APP_URL", "https://wonderful-emotion-production-b949.up.railway.app")
 
+# Support loading service account from env var (for Railway/cloud deployment)
+_SA_JSON_ENV = os.getenv("GOOGLE_SERVICE_ACCOUNT_JSON", "")
+if _SA_JSON_ENV and not os.path.isfile(SERVICE_ACCOUNT_FILE):
+    try:
+        with open(SERVICE_ACCOUNT_FILE, 'w') as f:
+            f.write(_SA_JSON_ENV)
+        logger.info("Created service account file from env var for email")
+    except Exception as e:
+        logger.error("Failed to write service account file: %s", e)
+
 
 def _send_via_gmail_api(to_email: str, subject: str, html_body: str) -> bool:
     """Try sending via Gmail API (Service Account delegation)."""

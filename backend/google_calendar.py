@@ -14,6 +14,17 @@ logger = logging.getLogger("smarttask.gcal")
 
 SCOPES = ['https://www.googleapis.com/auth/calendar', 'https://www.googleapis.com/auth/calendar.events']
 SERVICE_ACCOUNT_FILE = os.path.join(os.path.dirname(__file__), 'google-service-account.json')
+APP_URL = os.getenv("APP_URL", "https://wonderful-emotion-production-b949.up.railway.app")
+
+# Support loading service account from env var (for Railway/cloud deployment)
+_SA_JSON_ENV = os.getenv("GOOGLE_SERVICE_ACCOUNT_JSON", "")
+if _SA_JSON_ENV and not os.path.isfile(SERVICE_ACCOUNT_FILE):
+    try:
+        with open(SERVICE_ACCOUNT_FILE, 'w') as f:
+            f.write(_SA_JSON_ENV)
+        logger.info("Created service account file from GOOGLE_SERVICE_ACCOUNT_JSON env var")
+    except Exception as e:
+        logger.error("Failed to write service account file: %s", e)
 
 # ── Color IDs for Google Calendar ────────────
 # 1=Lavender, 2=Sage, 3=Grape, 4=Flamingo, 5=Banana
@@ -135,7 +146,7 @@ def task_to_event(task: dict) -> dict:
         },
         'source': {
             'title': 'SmartTask Pro',
-            'url': 'http://192.168.50.232:5174/tasks',
+            'url': f'{APP_URL}/tasks',
         },
     }
     
@@ -185,7 +196,7 @@ def flag_to_event(flag: dict) -> dict:
         },
         'source': {
             'title': 'SmartTask Pro',
-            'url': 'http://192.168.50.232:5174/flags',
+            'url': f'{APP_URL}/flags',
         },
     }
     
