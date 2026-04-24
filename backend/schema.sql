@@ -119,6 +119,17 @@ CREATE TABLE IF NOT EXISTS knowledge_base (
     created_at      TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- 7b. Google Calendar Events (sync tracking)
+CREATE TABLE IF NOT EXISTS google_calendar_events (
+    id              SERIAL PRIMARY KEY,
+    task_id         INTEGER REFERENCES tasks(id) ON DELETE CASCADE,
+    flag_id         INTEGER REFERENCES flags(id) ON DELETE CASCADE,
+    user_id         INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    google_event_id TEXT NOT NULL,
+    calendar_id     TEXT,
+    created_at      TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- 8. Notifications
 CREATE TABLE IF NOT EXISTS notifications (
     id              SERIAL PRIMARY KEY,

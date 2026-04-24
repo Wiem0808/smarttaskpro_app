@@ -94,6 +94,15 @@ def _run_migrations():
         "ALTER TABLE tasks ADD COLUMN IF NOT EXISTS last_reminder_sent TIMESTAMPTZ",
         "ALTER TABLE flags ADD COLUMN IF NOT EXISTS detected_by INTEGER REFERENCES users(id)",
         "ALTER TABLE flags ADD COLUMN IF NOT EXISTS link TEXT",
+        """CREATE TABLE IF NOT EXISTS google_calendar_events (
+            id SERIAL PRIMARY KEY,
+            task_id INTEGER REFERENCES tasks(id) ON DELETE CASCADE,
+            flag_id INTEGER REFERENCES flags(id) ON DELETE CASCADE,
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            google_event_id TEXT NOT NULL,
+            calendar_id TEXT,
+            created_at TIMESTAMPTZ DEFAULT NOW()
+        )""",
     ]
     for sql in migrations:
         try:
