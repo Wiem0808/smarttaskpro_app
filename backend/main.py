@@ -1022,13 +1022,15 @@ def migrate_data(secret: str, data: dict):
             execute(f"DELETE FROM {table}")
             results.append(f"[CLEAR] {table}")
 
-        # Import departments
+        # Import departments (WITHOUT manager_id to avoid FK issues)
+        dept_managers = {}
         for d in data.get("departments", []):
+            dept_managers[d["id"]] = d.get("manager_id")
             execute(
-                "INSERT INTO departments (id, name, description, color, icon, manager_id, created_at, updated_at) "
-                "VALUES (%s, %s, %s, %s, %s, %s, %s, %s) ON CONFLICT (id) DO NOTHING",
+                "INSERT INTO departments (id, name, description, color, icon, created_at, updated_at) "
+                "VALUES (%s, %s, %s, %s, %s, %s, %s) ON CONFLICT (id) DO NOTHING",
                 (d["id"], d["name"], d.get("description"), d.get("color", "#3b82f6"),
-                 d.get("icon", ""), d.get("manager_id"), d.get("created_at"), d.get("updated_at"))
+                 d.get("icon", ""), d.get("created_at"), d.get("updated_at"))
             )
         results.append(f"[+] {len(data.get('departments', []))} départements importés")
 
@@ -1043,6 +1045,15 @@ def migrate_data(secret: str, data: dict):
                  u.get("daily_capacity", 8), u.get("is_active", True), u.get("created_at"), u.get("updated_at"))
             )
         results.append(f"[+] {len(data.get('users', []))} utilisateurs importés")
+
+        # Now update department managers
+        for dept_id, mgr_id in dept_managers.items():
+            if mgr_id:
+                try:
+                    execute("UPDATE departments SET manager_id = %s WHERE id = %s", (mgr_id, dept_id))
+                except:
+                    pass
+        results.append("[OK] Manager IDs mis à jour")
 
         # Import tasks
         for t in data.get("tasks", []):

@@ -80,7 +80,7 @@ def serialize(obj):
 
 def migrate():
     print("=" * 50)
-    print("SmartTask Pro — Migration Local → Railway")
+    print("SmartTask Pro - Migration Local -> Railway")
     print("=" * 50)
 
     # Step 1: Get local data
