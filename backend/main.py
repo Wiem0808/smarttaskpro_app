@@ -161,8 +161,21 @@ def _deadline_reminder_loop():
             logger.error("Reminder scheduler error: %s", e)
         _time.sleep(3600)  # Wait 1 hour
 
-# Start the reminder thread
-threading.Thread(target=_deadline_reminder_loop, daemon=True, name="deadline-reminders").start()
+# Start the reminder thread only once (use env var to prevent duplicate on multi-worker)
+_scheduler_lock_file = os.path.join(os.path.dirname(__file__), '.scheduler_pid')
+def _start_scheduler_once():
+    """Ensure only one worker runs the deadline scheduler."""
+    import fcntl
+    try:
+        _lock_fd = open(_scheduler_lock_file, 'w')
+        fcntl.flock(_lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        _lock_fd.write(str(os.getpid()))
+        _lock_fd.flush()
+        threading.Thread(target=_deadline_reminder_loop, daemon=True, name="deadline-reminders").start()
+    except (IOError, OSError):
+        pass  # Another worker already has the lock
+
+_start_scheduler_once()
 
 
 
@@ -520,12 +533,19 @@ def _sync_flag_to_gcal(flag_id: int, user_id: int):
             if existing:
                 gcal.update_calendar_event(user["email"], existing["google_event_id"], event_body)
             else:
+                # Re-check flag still exists (race condition: flag may be deleted before sync)
+                flag_check = query_one("SELECT id FROM flags WHERE id = %s", (flag_id,))
+                if not flag_check:
+                    return
                 gid = gcal.create_calendar_event(user["email"], event_body)
                 if gid:
-                    execute(
-                        "INSERT INTO google_calendar_events (user_id, flag_id, google_event_id) VALUES (%s, %s, %s)",
-                        (user_id, flag_id, gid)
-                    )
+                    try:
+                        execute(
+                            "INSERT INTO google_calendar_events (user_id, flag_id, google_event_id) VALUES (%s, %s, %s)",
+                            (user_id, flag_id, gid)
+                        )
+                    except Exception:
+                        pass  # Flag was deleted between check and insert
         except Exception as e:
             logger.error("Flag sync error: %s", e)
     threading.Thread(target=_do_sync, daemon=True).start()
