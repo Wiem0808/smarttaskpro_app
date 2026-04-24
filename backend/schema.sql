@@ -55,6 +55,8 @@ CREATE TABLE IF NOT EXISTS tasks (
     deadline        TIMESTAMPTZ,
     priority_score  DECIMAL(5,2) DEFAULT 0,
     google_event_id VARCHAR(200),
+    link            TEXT,
+    last_reminder_sent TIMESTAMPTZ,
     started_at      TIMESTAMPTZ,
     completed_at    TIMESTAMPTZ,
     created_at      TIMESTAMPTZ DEFAULT NOW(),
@@ -74,6 +76,8 @@ CREATE TABLE IF NOT EXISTS flags (
     task_id         INTEGER NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
     raised_by       INTEGER NOT NULL REFERENCES users(id),
     assigned_to     INTEGER REFERENCES users(id),
+    detected_by     INTEGER REFERENCES users(id),
+    link            TEXT,
     category        VARCHAR(30) DEFAULT 'technical'
                     CHECK (category IN ('technical', 'resources', 'communication', 'external')),
     urgency         VARCHAR(20) DEFAULT 'normal'

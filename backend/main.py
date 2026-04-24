@@ -85,6 +85,24 @@ async def global_exception_handler(request: Request, exc: Exception):
 # Serve uploaded files
 app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
+# ── Auto-Migration: ensure missing columns exist ──────────────
+def _run_migrations():
+    """Add any missing columns to the database."""
+    migrations = [
+        "ALTER TABLE tasks ADD COLUMN IF NOT EXISTS link TEXT",
+        "ALTER TABLE tasks ADD COLUMN IF NOT EXISTS last_reminder_sent TIMESTAMPTZ",
+        "ALTER TABLE flags ADD COLUMN IF NOT EXISTS detected_by INTEGER REFERENCES users(id)",
+        "ALTER TABLE flags ADD COLUMN IF NOT EXISTS link TEXT",
+    ]
+    for sql in migrations:
+        try:
+            execute(sql)
+        except Exception as e:
+            logger.warning("Migration skipped: %s", e)
+    logger.info("Database migrations applied successfully")
+
+_run_migrations()
+
 # ── Deadline Reminder Scheduler ──────────────
 import threading
 import time as _time
