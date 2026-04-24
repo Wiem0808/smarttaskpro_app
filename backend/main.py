@@ -69,54 +69,6 @@ app.add_middleware(
 def health_check():
     return {"status": "ok", "service": "SmartTask Pro API"}
 
-# ── Temporary Debug Endpoint (REMOVE AFTER TESTING) ──
-@app.get("/api/debug/config")
-def debug_config():
-    sa_file = os.path.join(os.path.dirname(__file__), 'google-service-account.json')
-    sa_env = os.getenv("GOOGLE_SERVICE_ACCOUNT_JSON", "")
-    app_url = os.getenv("APP_URL", "NOT SET")
-    smtp_pwd = os.getenv("SMTP_PASSWORD", "")
-    return {
-        "service_account_file_exists": os.path.isfile(sa_file),
-        "service_account_env_set": bool(sa_env),
-        "service_account_env_length": len(sa_env),
-        "app_url": app_url,
-        "smtp_sender": os.getenv("SMTP_SENDER", "wiem.hsairi@benozzi.com"),
-        "smtp_password_set": bool(smtp_pwd),
-        "database_url_set": bool(os.getenv("DATABASE_URL", "")),
-    }
-
-@app.get("/api/debug/test-email")
-def debug_test_email():
-    """Test email sending directly (synchronous, returns error if any)."""
-    try:
-        result = notif._send_via_gmail_api(
-            "wiem.hsairi@benozzi.com",
-            "SmartTask Pro - Test Email",
-            "<h1>Test</h1><p>Email de test depuis Railway</p>"
-        )
-        if result:
-            return {"status": "ok", "method": "gmail_api", "message": "Email sent via Gmail API"}
-        # Try SMTP fallback
-        result2 = notif._send_via_smtp(
-            "wiem.hsairi@benozzi.com",
-            "SmartTask Pro - Test Email",
-            "<h1>Test</h1><p>Email de test depuis Railway (SMTP)</p>"
-        )
-        if result2:
-            return {"status": "ok", "method": "smtp", "message": "Email sent via SMTP"}
-        return {"status": "error", "message": "Both Gmail API and SMTP failed. Check logs."}
-    except Exception as e:
-        return {"status": "error", "message": str(e)}
-
-@app.get("/api/debug/test-gcal")
-def debug_test_gcal():
-    """Test Google Calendar access directly."""
-    try:
-        cal_id = gcal.get_or_create_smarttask_calendar("wiem.hsairi@benozzi.com")
-        return {"status": "ok" if cal_id else "error", "calendar_id": cal_id, "configured": gcal._is_configured()}
-    except Exception as e:
-        return {"status": "error", "message": str(e), "configured": gcal._is_configured()}
 
 # ── Global Error Handler (prevents crashes) ──
 import logging
