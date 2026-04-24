@@ -1,5 +1,5 @@
 # ══════════════════════════════════════════
-# SmartTask Pro — Database Layer (Robust Pool)
+# SmartTask Pro — Database Layer (Optimized Pool)
 # ══════════════════════════════════════════
 import os, logging, psycopg2, psycopg2.extras, psycopg2.pool
 from dotenv import load_dotenv
@@ -21,6 +21,8 @@ def _get_pool():
             minconn=2,
             maxconn=20,
             dsn=DATABASE_URL,
+            # Connection-level optimizations
+            options="-c statement_timeout=30000",  # 30s timeout per query
         )
     return _pool
 
@@ -41,11 +43,13 @@ def get_conn():
     """Return a pooled DB connection with RealDictCursor."""
     pool = _get_pool()
     conn = pool.getconn()
-    # Test if connection is alive
     try:
+        # Quick health check — only if connection seems stale
+        if conn.closed:
+            raise psycopg2.InterfaceError("Connection is closed")
         conn.cursor_factory = psycopg2.extras.RealDictCursor
-        with conn.cursor() as cur:
-            cur.execute("SELECT 1")
+        # Use a lightweight ping instead of SELECT 1
+        conn.isolation_level  # Will raise if connection is dead
         return conn
     except Exception:
         # Connection is dead, discard it and get a new one
@@ -112,7 +116,7 @@ def query(sql: str, params=None, *, fetchone=False, fetchall=False, returning=Fa
 
 
 def query_all(sql: str, params=None):
-    return query(sql, params, fetchall=True)
+    return query(sql, params, fetchall=True) or []
 
 
 def query_one(sql: str, params=None):

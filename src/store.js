@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════
-// SmartTask Pro — Zustand Store
+// SmartTask Pro — Zustand Store (with cache-aware loading)
 // ══════════════════════════════════════════
 import { create } from 'zustand';
 import api from './api';
@@ -18,6 +18,7 @@ const useStore = create((set, get) => ({
   },
 
   logout: () => {
+    api.clearCache();
     localStorage.removeItem('st_token');
     localStorage.removeItem('st_user');
     set({ user: null, token: null });
@@ -25,62 +26,108 @@ const useStore = create((set, get) => ({
 
   // Toast
   toast: null,
+  _toastTimer: null,
   showToast: (msg, type = 'success') => {
-    set({ toast: { msg, type } });
-    setTimeout(() => set({ toast: null }), 3000);
+    const prev = get()._toastTimer;
+    if (prev) clearTimeout(prev);
+    const timer = setTimeout(() => set({ toast: null, _toastTimer: null }), 3500);
+    set({ toast: { msg, type }, _toastTimer: timer });
   },
+
+  // Global backend connectivity
+  backendOnline: true,
+  setBackendOnline: (v) => set({ backendOnline: v }),
 
   // Departments
   departments: [],
   loadDepartments: async () => {
-    const data = await api.getDepartments();
-    set({ departments: data });
+    try {
+      const data = await api.getDepartments();
+      if (data) set({ departments: data });
+      get().setBackendOnline(true);
+    } catch (e) {
+      console.error('loadDepartments:', e.message);
+      get().setBackendOnline(false);
+    }
   },
 
   // Users
   users: [],
   loadUsers: async (params) => {
-    const data = await api.getUsers(params);
-    set({ users: data });
+    try {
+      const data = await api.getUsers(params);
+      if (data) set({ users: data });
+      get().setBackendOnline(true);
+    } catch (e) {
+      console.error('loadUsers:', e.message);
+      get().setBackendOnline(false);
+    }
   },
-
 
   // Tasks
   tasks: [],
   myTasks: [],
   loadTasks: async (params) => {
-    const data = await api.getTasks(params);
-    set({ tasks: data });
+    try {
+      const data = await api.getTasks(params);
+      if (data) set({ tasks: data });
+      get().setBackendOnline(true);
+    } catch (e) {
+      console.error('loadTasks:', e.message);
+      get().setBackendOnline(false);
+    }
   },
   loadMyTasks: async () => {
-    const data = await api.getMyTasks();
-    set({ myTasks: data });
+    try {
+      const data = await api.getMyTasks();
+      if (data) set({ myTasks: data });
+    } catch (e) {
+      console.error('loadMyTasks:', e.message);
+    }
   },
 
   // Flags
   flags: [],
   loadFlags: async (params) => {
-    const data = await api.getFlags(params);
-    set({ flags: data });
+    try {
+      const data = await api.getFlags(params);
+      if (data) set({ flags: data });
+      get().setBackendOnline(true);
+    } catch (e) {
+      console.error('loadFlags:', e.message);
+      get().setBackendOnline(false);
+    }
   },
 
   // Stats
   stats: null,
   heatmap: [],
   loadStats: async () => {
-    const data = await api.getStats();
-    set({ stats: data });
+    try {
+      const data = await api.getStats();
+      if (data) set({ stats: data });
+    } catch (e) {
+      console.error('loadStats:', e.message);
+    }
   },
   loadHeatmap: async () => {
-    const data = await api.getHeatmap();
-    set({ heatmap: data });
+    try {
+      const data = await api.getHeatmap();
+      if (data) set({ heatmap: data || [] });
+    } catch (e) {
+      console.error('loadHeatmap:', e.message);
+    }
   },
 
   // Notifications
   notifications: [],
   loadNotifications: async () => {
-    const data = await api.getNotifications();
-    set({ notifications: data });
+    try {
+      const data = await api.getNotifications();
+      if (data) set({ notifications: data || [] });
+    } catch (e) {
+      console.error('loadNotifications:', e.message);
+    }
   },
 }));
 

@@ -1,0 +1,151 @@
+# ============================================================
+# SmartTask Pro - Persistent Backend Watchdog
+# ============================================================
+# Launches the Python backend and auto-restarts on crash.
+# Runs hidden in background, survives closing any app/IDE.
+# Uses a lock file to prevent duplicate instances.
+# ============================================================
+
+$ErrorActionPreference = "Continue"
+
+# -- Paths --
+$ScriptDir    = Split-Path -Parent $MyInvocation.MyCommand.Path
+$BackendDir   = $ScriptDir
+$ProjectDir   = Split-Path -Parent $BackendDir
+$LogDir       = Join-Path $ProjectDir "logs"
+$LogFile      = Join-Path $LogDir "watchdog.log"
+$PidFile      = Join-Path $BackendDir "server.pid"
+$LockFile     = Join-Path $BackendDir "watchdog.lock"
+$ServerScript = Join-Path $BackendDir "main.py"
+$ServerPort   = 8150
+
+# -- Ensure logs directory exists --
+if (-not (Test-Path $LogDir)) {
+    New-Item -ItemType Directory -Path $LogDir -Force | Out-Null
+}
+
+# -- Logging --
+function Write-Log {
+    param([string]$Message)
+    $ts = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+    try { Add-Content -Path $LogFile -Value "$ts - $Message" -Encoding UTF8 } catch {}
+}
+
+# -- Check if server is listening --
+function Test-ServerRunning {
+    $c = Get-NetTCPConnection -LocalPort $ServerPort -State Listen -ErrorAction SilentlyContinue
+    return ($null -ne $c)
+}
+
+# -- Kill existing server --
+function Stop-ExistingServer {
+    $conns = Get-NetTCPConnection -LocalPort $ServerPort -State Listen -ErrorAction SilentlyContinue
+    if ($conns) {
+        foreach ($c in @($conns)) {
+            Stop-Process -Id $c.OwningProcess -Force -ErrorAction SilentlyContinue
+            Write-Log "Killed PID $($c.OwningProcess) on port $ServerPort"
+        }
+        Start-Sleep -Seconds 2
+    }
+}
+
+# -- Lock file duplicate detection --
+if (Test-Path $LockFile) {
+    $lockPid = 0
+    $content = Get-Content $LockFile -Raw -ErrorAction SilentlyContinue
+    if ($content) { $lockPid = [int]$content.Trim() }
+    $existing = Get-Process -Id $lockPid -ErrorAction SilentlyContinue
+    if ($null -ne $existing) {
+        Write-Log "Another watchdog running (PID: $lockPid). Exiting."
+        exit 0
+    }
+    Remove-Item $LockFile -Force -ErrorAction SilentlyContinue
+}
+
+$PID | Out-File -FilePath $LockFile -Encoding ASCII -Force
+
+# -- Main --
+Write-Log "=========================================="
+Write-Log "SmartTask Watchdog STARTED (PID: $PID)"
+Write-Log "Backend: $BackendDir"
+Write-Log "Port: $ServerPort"
+Write-Log "=========================================="
+
+Stop-ExistingServer
+
+$maxRestarts = 100
+$restartCount = 0
+$rapidCrashCount = 0
+
+while ($restartCount -lt $maxRestarts) {
+    $restartCount++
+    $startTime = Get-Date
+
+    Write-Log "Starting backend (attempt #$restartCount)..."
+
+    try {
+        $psi = New-Object System.Diagnostics.ProcessStartInfo
+        $psi.FileName = "python"
+        $psi.Arguments = "`"$ServerScript`""
+        $psi.WorkingDirectory = $BackendDir
+        $psi.UseShellExecute = $false
+        $psi.CreateNoWindow = $true
+        $psi.RedirectStandardOutput = $false
+        $psi.RedirectStandardError = $false
+
+        $proc = [System.Diagnostics.Process]::Start($psi)
+
+        if ($null -ne $proc) {
+            Set-Content -Path $PidFile -Value $proc.Id -Encoding ASCII -Force
+            Write-Log "Backend started PID $($proc.Id)"
+
+            for ($w = 0; $w -lt 30; $w++) {
+                Start-Sleep -Seconds 1
+                if (Test-ServerRunning) {
+                    Write-Log "Backend LISTENING on port $ServerPort (took $($w+1)s)"
+                    break
+                }
+            }
+
+            if (-not (Test-ServerRunning)) {
+                Write-Log "WARNING: Backend not listening after 30s"
+            }
+
+            $proc.WaitForExit()
+            $exitCode = $proc.ExitCode
+            Write-Log "Backend exited code $exitCode (restart #$restartCount)"
+
+            if ($exitCode -eq 0) {
+                Write-Log "Clean exit - stopping watchdog"
+                break
+            }
+        }
+        else {
+            Write-Log "ERROR: Process.Start returned null"
+        }
+    }
+    catch {
+        Write-Log "ERROR: $($_.Exception.Message)"
+    }
+
+    $dur = (Get-Date) - $startTime
+    if ($dur.TotalSeconds -lt 10) {
+        $rapidCrashCount++
+        Write-Log "Rapid crash #$rapidCrashCount"
+        if ($rapidCrashCount -ge 5) {
+            Write-Log "5 rapid crashes - waiting 60s"
+            Start-Sleep -Seconds 60
+            $rapidCrashCount = 0
+        }
+    }
+    else { $rapidCrashCount = 0 }
+
+    if (Test-Path $PidFile) { Remove-Item $PidFile -Force -ErrorAction SilentlyContinue }
+    Write-Log "Restarting in 5s..."
+    Start-Sleep -Seconds 5
+    Stop-ExistingServer
+}
+
+Write-Log "SmartTask Watchdog STOPPED"
+if (Test-Path $PidFile) { Remove-Item $PidFile -Force -ErrorAction SilentlyContinue }
+if (Test-Path $LockFile) { Remove-Item $LockFile -Force -ErrorAction SilentlyContinue }

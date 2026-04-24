@@ -326,35 +326,43 @@ def deactivate_user(uid: int, user=Depends(require_role("super_admin"))):
 # ══════════════════════════════════════════
 
 def recalc_priority(task_id: int):
-    """Recalculate dynamic priority score for a task."""
-    task = query_one("SELECT * FROM tasks WHERE id = %s", (task_id,))
-    if not task:
+    """Recalculate dynamic priority score for a task using a single optimized query."""
+    row = query_one("""
+        SELECT t.*,
+               COALESCE(u.daily_capacity, 8) AS user_capacity,
+               COALESCE(active_count.c, 0) AS active_task_count,
+               COALESCE(dep_count.c, 0) AS dep_count
+        FROM tasks t
+        LEFT JOIN users u ON t.assigned_to = u.id
+        LEFT JOIN LATERAL (
+            SELECT COUNT(*) AS c FROM tasks
+            WHERE assigned_to = t.assigned_to AND status IN ('todo','in_progress')
+        ) active_count ON t.assigned_to IS NOT NULL
+        LEFT JOIN LATERAL (
+            SELECT COUNT(*) AS c FROM task_dependencies WHERE depends_on = t.id
+        ) dep_count ON TRUE
+        WHERE t.id = %s
+    """, (task_id,))
+    if not row:
         return
 
     # Urgency
     urgency = 30
-    if task["deadline"]:
-        hours_left = max(0, (task["deadline"] - datetime.now(timezone.utc)).total_seconds() / 3600)
-        est = float(task["estimated_hours"] or 1)
+    if row["deadline"]:
+        hours_left = max(0, (row["deadline"] - datetime.now(timezone.utc)).total_seconds() / 3600)
+        est = float(row["estimated_hours"] or 1)
         urgency = max(0, min(100, 100 - (hours_left - est) / 24 * 10))
 
-    # Importance (no project weight, use importance directly)
-    importance = (task["importance"] / 5) * 3 * 4
+    # Importance
+    importance = (row["importance"] / 5) * 3 * 4
 
     # Load
     load = 30
-    if task["assigned_to"]:
-        active = query_one(
-            "SELECT COUNT(*) AS c FROM tasks WHERE assigned_to = %s AND status IN ('todo','in_progress')",
-            (task["assigned_to"],),
-        )
-        user = query_one("SELECT daily_capacity FROM users WHERE id = %s", (task["assigned_to"],))
-        cap = user["daily_capacity"] if user else 8
-        load = min(100, (active["c"] / max(cap, 1)) * 100)
+    if row["assigned_to"]:
+        load = min(100, (row["active_task_count"] / max(row["user_capacity"], 1)) * 100)
 
     # Dependencies
-    deps_count = query_one("SELECT COUNT(*) AS c FROM task_dependencies WHERE depends_on = %s", (task_id,))
-    deps = min(100, (deps_count["c"] if deps_count else 0) * 25)
+    deps = min(100, row["dep_count"] * 25)
 
     score = round(urgency * 0.4 + importance * 0.3 + load * 0.2 + deps * 0.1, 2)
     execute("UPDATE tasks SET priority_score = %s WHERE id = %s", (score, task_id))
@@ -843,21 +851,23 @@ def search_knowledge(q: Optional[str] = None, category: Optional[str] = None, us
 
 @app.get("/api/dashboard/stats")
 def dashboard_stats(user=Depends(get_current_user)):
-    total_tasks   = query_one("SELECT COUNT(*) AS c FROM tasks")
-    done_tasks    = query_one("SELECT COUNT(*) AS c FROM tasks WHERE status = 'done'")
-    blocked_tasks = query_one("SELECT COUNT(*) AS c FROM tasks WHERE status = 'blocked'")
-    open_flags    = query_one("SELECT COUNT(*) AS c FROM flags WHERE status IN ('open', 'in_progress')")
-    total_users   = query_one("SELECT COUNT(*) AS c FROM users WHERE is_active = TRUE")
-    total_depts   = query_one("SELECT COUNT(*) AS c FROM departments")
-
+    row = query_one("""
+        SELECT
+            (SELECT COUNT(*) FROM tasks) AS total_tasks,
+            (SELECT COUNT(*) FROM tasks WHERE status = 'done') AS done_tasks,
+            (SELECT COUNT(*) FROM tasks WHERE status = 'blocked') AS blocked_tasks,
+            (SELECT COUNT(*) FROM flags WHERE status IN ('open', 'in_progress')) AS open_flags,
+            (SELECT COUNT(*) FROM users WHERE is_active = TRUE) AS total_users,
+            (SELECT COUNT(*) FROM departments) AS total_departments
+    """)
     return {
-        "total_tasks":   total_tasks["c"],
-        "done_tasks":    done_tasks["c"],
-        "blocked_tasks": blocked_tasks["c"],
-        "open_flags":    open_flags["c"],
-        "total_users":   total_users["c"],
-        "total_departments": total_depts["c"],
-        "completion_rate": round(done_tasks["c"] / max(total_tasks["c"], 1) * 100, 1),
+        "total_tasks":   row["total_tasks"],
+        "done_tasks":    row["done_tasks"],
+        "blocked_tasks": row["blocked_tasks"],
+        "open_flags":    row["open_flags"],
+        "total_users":   row["total_users"],
+        "total_departments": row["total_departments"],
+        "completion_rate": round(row["done_tasks"] / max(row["total_tasks"], 1) * 100, 1),
     }
 
 

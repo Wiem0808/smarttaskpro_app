@@ -895,6 +895,36 @@ a:hover { color: var(--accent-hover); }
 .toast-error   { background: var(--danger);  color: #fff; }
 
 /* ══════════════════════════════════════════
+   CONNECTION BANNER
+   ══════════════════════════════════════════ */
+.conn-banner {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #fff;
+  font-size: .85rem;
+  font-weight: 700;
+  letter-spacing: .02em;
+  animation: slideDown .3s ease-out;
+  box-shadow: 0 4px 20px rgba(245, 158, 11, .4);
+}
+.conn-spinner {
+  width: 16px; height: 16px;
+  border: 2px solid rgba(255,255,255,.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin .8s linear infinite;
+}
+@keyframes slideDown { from { transform: translateY(-100%); } to { transform: translateY(0); } }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ══════════════════════════════════════════
    LOGIN PAGE
    ══════════════════════════════════════════ */
 .login-page {

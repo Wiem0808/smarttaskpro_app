@@ -31,9 +31,14 @@ CREATE TABLE IF NOT EXISTS users (
     updated_at      TIMESTAMPTZ DEFAULT NOW()
 );
 
--- FK departments.manager_id → users
-ALTER TABLE departments ADD CONSTRAINT fk_dept_manager
-    FOREIGN KEY (manager_id) REFERENCES users(id) ON DELETE SET NULL;
+-- FK departments.manager_id → users (safe for re-runs)
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_dept_manager') THEN
+        ALTER TABLE departments ADD CONSTRAINT fk_dept_manager
+            FOREIGN KEY (manager_id) REFERENCES users(id) ON DELETE SET NULL;
+    END IF;
+END $$;
 
 -- 3. Tâches (liées directement aux départements)
 CREATE TABLE IF NOT EXISTS tasks (
@@ -137,10 +142,18 @@ CREATE TABLE IF NOT EXISTS user_stats (
 CREATE INDEX IF NOT EXISTS idx_tasks_assigned   ON tasks(assigned_to);
 CREATE INDEX IF NOT EXISTS idx_tasks_department ON tasks(department_id);
 CREATE INDEX IF NOT EXISTS idx_tasks_status     ON tasks(status);
+CREATE INDEX IF NOT EXISTS idx_tasks_deadline   ON tasks(deadline);
+CREATE INDEX IF NOT EXISTS idx_tasks_created_by ON tasks(created_by);
+CREATE INDEX IF NOT EXISTS idx_tasks_priority   ON tasks(priority_score DESC);
 CREATE INDEX IF NOT EXISTS idx_flags_task       ON flags(task_id);
 CREATE INDEX IF NOT EXISTS idx_flags_status     ON flags(status);
+CREATE INDEX IF NOT EXISTS idx_flags_assigned   ON flags(assigned_to);
+CREATE INDEX IF NOT EXISTS idx_flags_raised_by  ON flags(raised_by);
 CREATE INDEX IF NOT EXISTS idx_notif_user       ON notifications(user_id, is_read);
 CREATE INDEX IF NOT EXISTS idx_users_dept       ON users(department_id);
+CREATE INDEX IF NOT EXISTS idx_users_email      ON users(email);
+CREATE INDEX IF NOT EXISTS idx_attach_flag      ON attachments(flag_id);
+CREATE INDEX IF NOT EXISTS idx_attach_task      ON attachments(task_id);
 
 -- ── Default super admin ──────────────────
 INSERT INTO users (email, full_name, role, password_hash)
