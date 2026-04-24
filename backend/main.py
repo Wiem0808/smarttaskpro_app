@@ -971,6 +971,23 @@ def setup_database(secret: str):
     else:
         results.append(f"[OK] Admin existe déjà: {admin_email}")
 
+    # Create Wiem user
+    wiem_email = "wiem.hsairi@benozzi.com"
+    existing_wiem = query_one("SELECT id FROM users WHERE email = %s", (wiem_email,))
+    if not existing_wiem:
+        dept = query_one("SELECT id FROM departments WHERE name = 'Direction'")
+        dept_id = dept["id"] if dept else None
+        hashed = hash_password("Benozzi2026!")
+        row = execute_returning(
+            "INSERT INTO users (email, full_name, password_hash, role, department_id, daily_capacity) "
+            "VALUES (%s, %s, %s, %s, %s, %s) RETURNING id",
+            (wiem_email, "Wiem Hsairi", hashed, "super_admin", dept_id, 8)
+        )
+        execute("INSERT INTO user_stats (user_id) VALUES (%s) ON CONFLICT DO NOTHING", (row["id"],))
+        results.append(f"[+] User créé: {wiem_email}")
+    else:
+        results.append(f"[OK] User existe déjà: {wiem_email}")
+
     return {"results": results}
 
 
