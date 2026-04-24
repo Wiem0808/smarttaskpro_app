@@ -974,6 +974,23 @@ def setup_database(secret: str):
     return {"results": results}
 
 
+@app.get("/api/debug/{secret}")
+def debug_database(secret: str):
+    """Temporary: view database contents."""
+    if secret != "init-smarttask-2026":
+        raise HTTPException(403, "Invalid key")
+
+    users = query_all("SELECT id, email, full_name, role, department_id FROM users ORDER BY id")
+    departments = query_all("SELECT id, name, description FROM departments ORDER BY id")
+
+    return {
+        "users": users,
+        "departments": departments,
+        "user_count": len(users),
+        "dept_count": len(departments),
+    }
+
+
 # ══════════════════════════════════════════
 #  STARTUP
 # ══════════════════════════════════════════
