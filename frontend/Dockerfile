@@ -7,14 +7,13 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 COPY . .
-ARG VITE_API_URL
-ENV VITE_API_URL=$VITE_API_URL
 RUN npm run build
 
 # Stage 2: Serve with Nginx (Railway-compatible)
 FROM nginx:alpine
 COPY --from=builder /app/dist /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/templates/default.conf.template
+COPY nginx.conf /etc/nginx/nginx.conf.template
 ENV PORT=80
 EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+# Only substitute $PORT, leave nginx variables ($host, $uri, etc.) untouched
+CMD envsubst '$$PORT' < /etc/nginx/nginx.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'
