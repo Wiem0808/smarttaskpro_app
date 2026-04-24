@@ -93,32 +93,41 @@ def _deadline_reminder_loop():
     """Background loop: checks overdue tasks every hour and sends reminder emails."""
     logger.info("Deadline reminder scheduler started (checks every 60 min)")
     _time.sleep(30)  # Wait 30s after startup before first check
+
+    # Ensure the column exists
+    try:
+        execute("ALTER TABLE tasks ADD COLUMN IF NOT EXISTS last_reminder_sent TIMESTAMPTZ DEFAULT NULL")
+        logger.info("Ensured last_reminder_sent column exists")
+    except Exception as e:
+        logger.warning("Could not add last_reminder_sent column: %s", e)
+
     while True:
         try:
             overdue_tasks = query_all("""
-                SELECT t.*, u.email AS assigned_email, u.full_name AS assigned_name
+                SELECT t.id, t.title, t.description, t.status, t.deadline, t.importance,
+                       u.email AS assigned_email, u.full_name AS assigned_name
                 FROM tasks t
                 JOIN users u ON t.assigned_to = u.id
                 WHERE t.status NOT IN ('done')
                   AND t.deadline IS NOT NULL
                   AND t.deadline < NOW()
-                  AND (t.last_reminder_sent IS NULL OR t.last_reminder_sent < NOW() - INTERVAL '1 day')
             """)
             if overdue_tasks:
                 logger.info("Found %d overdue tasks, sending reminders...", len(overdue_tasks))
                 for task in overdue_tasks:
                     t = dict(task)
-                    days_overdue = (datetime.now(timezone.utc) - t["deadline"].replace(tzinfo=timezone.utc)).days
-                    if days_overdue < 1:
-                        days_overdue = 1
-                    notif.notify_task_overdue(
-                        to_email=t["assigned_email"],
-                        to_name=t["assigned_name"],
-                        task=t,
-                        days_overdue=days_overdue,
-                    )
-                    # Mark as reminded
-                    execute("UPDATE tasks SET last_reminder_sent = NOW() WHERE id = %s", (t["id"],))
+                    try:
+                        days_overdue = (datetime.now(timezone.utc) - t["deadline"].replace(tzinfo=timezone.utc)).days
+                        if days_overdue < 1:
+                            days_overdue = 1
+                        notif.notify_task_overdue(
+                            to_email=t["assigned_email"],
+                            to_name=t["assigned_name"],
+                            task=t,
+                            days_overdue=days_overdue,
+                        )
+                    except Exception as e2:
+                        logger.warning("Reminder send failed for task %s: %s", t["id"], e2)
                     _time.sleep(2)  # Small delay between emails
         except Exception as e:
             logger.error("Reminder scheduler error: %s", e)
