@@ -1,0 +1,13 @@
+# ══════════════════════════════════════════
+# SmartTask Pro — Frontend (Railway Config)
+# ══════════════════════════════════════════
+
+[build]
+builder = "dockerfile"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+healthcheckPath = "/"
+healthcheckTimeout = 30
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 3
