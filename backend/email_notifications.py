@@ -10,7 +10,7 @@ from email.mime.multipart import MIMEMultipart
 from typing import Optional
 import threading
 
-logger = logging.getLogger("BNZ TASK.email")
+logger = logging.getLogger("smarttask.email")
 
 SERVICE_ACCOUNT_FILE = os.path.join(os.path.dirname(__file__), 'google-service-account.json')
 SENDER_EMAIL = os.getenv("SMTP_SENDER", "wiem.hsairi@benozzi.com")

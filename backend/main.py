@@ -76,7 +76,7 @@ from fastapi.responses import JSONResponse
 from starlette.requests import Request
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
-logger = logging.getLogger("BNZ TASK")
+logger = logging.getLogger("smarttask")
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):

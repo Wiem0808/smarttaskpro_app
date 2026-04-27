@@ -10,7 +10,7 @@ from typing import Optional
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 
-logger = logging.getLogger("BNZ TASK.gcal")
+logger = logging.getLogger("smarttask.gcal")
 
 SCOPES = ['https://www.googleapis.com/auth/calendar', 'https://www.googleapis.com/auth/calendar.events']
 SERVICE_ACCOUNT_FILE = os.path.join(os.path.dirname(__file__), 'google-service-account.json')
@@ -75,7 +75,7 @@ def _get_service(user_email: str):
 #  BNZ TASK CALENDAR (dedicated calendar)
 # ══════════════════════════════════════════
 
-def get_or_create_BNZ TASK_calendar(user_email: str) -> Optional[str]:
+def get_or_create_bnztask_calendar(user_email: str) -> Optional[str]:
     """
     Find or create a 'BNZ TASK' secondary calendar for the user.
     Returns the calendar ID or None.
@@ -245,7 +245,7 @@ def create_calendar_event(user_email: str, event_body: dict) -> Optional[str]:
     if not service:
         return None
     
-    cal_id = get_or_create_BNZ TASK_calendar(user_email)
+    cal_id = get_or_create_bnztask_calendar(user_email)
     if not cal_id:
         cal_id = 'primary'
     
@@ -268,7 +268,7 @@ def update_calendar_event(user_email: str, google_event_id: str, event_body: dic
     if not service:
         return False
     
-    cal_id = get_or_create_BNZ TASK_calendar(user_email)
+    cal_id = get_or_create_bnztask_calendar(user_email)
     if not cal_id:
         cal_id = 'primary'
     
@@ -292,7 +292,7 @@ def delete_calendar_event(user_email: str, google_event_id: str) -> bool:
     if not service:
         return False
     
-    cal_id = get_or_create_BNZ TASK_calendar(user_email)
+    cal_id = get_or_create_bnztask_calendar(user_email)
     if not cal_id:
         cal_id = 'primary'
     
